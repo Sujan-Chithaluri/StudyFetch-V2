@@ -15,17 +15,21 @@
     "@vercel/blob": "^1.1.1",
     "bcryptjs": "^3.0.2",
     "date-fns": "^4.1.0",
+    "html2pdf.js": "^0.10.3",
     "lucide-react": "^0.503.0",
     "next": "15.1.7",
     "next-auth": "^4.24.11",
+    "pdfjs-dist": "^2.16.105",
     "react": "^19.1.0",
     "react-dom": "^19.0.0",
-    "react-pdf": "^9.2.1"
+    "react-pdf": "^9.2.1",
+    "zustand": "^5.0.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@types/bcryptjs": "^3.0.0",
     "@types/node": "^20",
+    "@types/pdfjs-dist": "^2.10.378",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

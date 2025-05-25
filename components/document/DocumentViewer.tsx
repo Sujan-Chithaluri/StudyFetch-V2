@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import dynamic from "next/dynamic";
+import ParsedPDFViewer from "./ParsedPDFViewer";
 
 // Dynamically import react-pdf to avoid SSR issues
 const ActualPDFViewer = dynamic(() => import("./ActualPDFViewer"), {
@@ -18,6 +19,7 @@ type DocumentViewerProps = {
   document: {
     fileUrl: string;
     fileName: string;
+    content: JSON;
   };
   className?: string;
   showParsed?: boolean;
@@ -31,12 +33,7 @@ export default function DocumentViewer({
   return (
     <div className={`flex flex-col ${className}`}>
       {showParsed ? (
-        <div className="p-4 bg-white shadow rounded-lg">
-          <h2 className="text-lg font-semibold mb-2">Parsed Document</h2>
-          <p className="text-gray-700">
-            This is a placeholder for parsed document content.
-          </p>
-        </div>
+        <ParsedPDFViewer />
       ) : (
         <ActualPDFViewer document={document} />
       )}{" "}

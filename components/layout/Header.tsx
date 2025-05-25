@@ -91,7 +91,7 @@ export default function Header() {
                 
                 {/* Dropdown Menu */}
                 {dropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-200">
+                  <div className="fixed right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-200 border border-gray-200">
                     <Link 
                       href="/profile" 
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"

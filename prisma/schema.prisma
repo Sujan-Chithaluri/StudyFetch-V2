@@ -34,7 +34,7 @@ model Document {
   fileUrl     String       // URL or path to the stored file
   fileType    String       @default("application/pdf")
   title       String?      // Extracted or user-provided title
-  content     String?      @db.Text // Extracted text content
+  content     Json?        // Parsed content of the document, if applicable
   metadata    Json?        // Any additional metadata (page count, author, etc.)
   userId      String
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
