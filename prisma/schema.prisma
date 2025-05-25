@@ -1,0 +1,66 @@
+// This is Prisma schema file,
+// which defines the data model and database connection for the application.
+// It uses PostgreSQL as the database provider and includes models for User, Document, ChatSession, and Message.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SessionType {
+  TUTOR
+  FLASHCARDS
+  SUMMARY
+}
+
+model User {
+  id           String        @id @default(cuid())
+  name         String?
+  email        String        @unique
+  password     String
+  documents    Document[]
+  chatSessions ChatSession[]
+  messages     Message[]
+}
+
+model Document {
+  id          String       @id @default(cuid())
+  createdAt   DateTime     @default(now())
+  fileName    String
+  fileUrl     String       // URL or path to the stored file
+  fileType    String       @default("application/pdf")
+  title       String?      // Extracted or user-provided title
+  content     String?      @db.Text // Extracted text content
+  metadata    Json?        // Any additional metadata (page count, author, etc.)
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chatSessions ChatSession[]
+}
+
+model ChatSession {
+  id          String      @id @default(cuid())
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  title       String?
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages    Message[]
+  type        SessionType @default(TUTOR)
+  documentId  String?
+  document    Document?   @relation(fields: [documentId], references: [id], onDelete: Restrict)
+}
+
+model Message {
+  id            String      @id @default(cuid())
+  createdAt     DateTime    @default(now())
+  content       String      @db.Text
+  isUserMessage Boolean     @default(true)
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chatSessionId String
+  chatSession   ChatSession @relation(fields: [chatSessionId], references: [id], onDelete: Cascade)
+}
