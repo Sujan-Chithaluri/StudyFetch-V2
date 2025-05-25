@@ -23,7 +23,7 @@ export default function TutorSessionLayout({
   currentPosition,
 }: TutorSessionLayoutProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-indigo-50 py-4 px-4">
+    <div className="h-[calc(100vh-3.5rem)] overflow-hidden flex flex-col">
       {/* Sidebar */}
       <SessionSidebar
         surroundingSessions={surroundingSessions}
@@ -35,43 +35,40 @@ export default function TutorSessionLayout({
         currentPosition={currentPosition}
       />
       
-      {/* Main content */}
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="bg-white rounded-t-lg shadow-sm p-4 border-b border-gray-200">
+      {/* Header - Sticky below main header */}
+      <div className="sticky top-0 z-10 bg-white shadow-sm border-b border-gray-200">
+        <div className="px-16 py-3">
           <h1 className="text-xl font-semibold text-gray-800 truncate">
             {currentSession.title ||
               currentSession.document?.title ||
               "Untitled Session"}
           </h1>
         </div>
+      </div>
+      
+      {/* Content area - Takes remaining height */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Chat interface */}
+        <div className="w-1/2 overflow-hidden">
+          <ChatInterface
+            sessionId={currentSession.id}
+            initialMessages={currentSession.messages}
+            className="h-full"
+          />
+        </div>
         
-        {/* Content area */}
-        <div className="bg-white rounded-b-lg shadow-sm flex flex-col md:flex-row">
-          {/* Chat interface */}
-          <div className="w-full md:w-1/2">
-            <ChatInterface
-              sessionId={currentSession.id}
-              initialMessages={currentSession.messages}
-              className="h-[calc(100vh-180px)]"
+        {/* PDF viewer */}
+        <div className="w-1/2 border-l border-gray-200 overflow-hidden">
+          {currentSession.document ? (
+            <DocumentViewer
+              document={currentSession.document}
+              className="h-full"
             />
-          </div>
-          
-          {/* PDF viewer */}
-          <div className="w-full md:w-1/2 border-r border-gray-200">
-            {currentSession.document ? (
-              <DocumentViewer
-                document={currentSession.document}
-                className="h-[calc(100vh-180px)]"
-              />
-            ) : (
-              <div className="h-[calc(100vh-180px)] flex items-center justify-center p-6 text-gray-500">
-                No document attached to this session
-              </div>
-            )}
-          </div>
-          
-          
+          ) : (
+            <div className="h-full flex items-center justify-center p-6 text-gray-500">
+              No document attached to this session
+            </div>
+          )}
         </div>
       </div>
     </div>

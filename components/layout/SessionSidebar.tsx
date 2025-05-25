@@ -107,7 +107,7 @@ export default function SessionSidebar({
       {/* Sidebar toggle button (visible when sidebar is closed) */}
       <button
         onClick={() => setIsOpen(true)}
-        className={`fixed top-20 left-0 bg-white p-2 rounded-r-md shadow-md z-10 ${
+        className={`fixed top-20 left-0 bg-white p-2 rounded-r-md shadow-md z-20 ${
           isOpen ? "hidden" : "flex"
         } items-center justify-center`}
         aria-label="Open sidebar"
