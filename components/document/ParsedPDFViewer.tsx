@@ -391,7 +391,7 @@ const ParsedPDFViewer = forwardRef<ParsedPDFViewerHandle, ParsedPDFViewerProps>(
     return (
       <div className="flex flex-col h-full">
         {/* Toolbar */}
-        <div className="sticky top-0 z-10">
+        <div className="sticky top-0 z-0 bg-white border-b border-gray-200 shadow-sm">
           <PdfControls
             currentPage={currentPage}
             totalPages={pdfText.length}

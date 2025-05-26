@@ -1,25 +1,17 @@
 // components/document/DocumentViewer.tsx
 "use client";
 
-import { useState } from "react";
-import dynamic from "next/dynamic";
+import { useState, lazy, Suspense } from "react";
 import ParsedPDFViewer from "./ParsedPDFViewer";
+import { usePdfViewer } from "@/hooks/contexts/PdfViewerContext";
 
-// Dynamically import react-pdf to avoid SSR issues
-const ActualPDFViewer = dynamic(() => import("./ActualPDFViewer"), {
-  ssr: false,
-  loading: () => (
-    <div className="flex items-center justify-center h-full">
-      <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-    </div>
-  ),
-});
+const ActualPDFViewer = lazy(() => import("./ActualPDFViewer"));
 
 type DocumentViewerProps = {
   document: {
     fileUrl: string;
     fileName: string;
-    content: JSON;
+    content: any;
   };
   className?: string;
   showParsed?: boolean;
@@ -30,13 +22,23 @@ export default function DocumentViewer({
   className = "",
   showParsed = true,
 }: DocumentViewerProps) {
+  const { pdfViewerRef } = usePdfViewer();
+  
   return (
     <div className={`flex flex-col ${className}`}>
       {showParsed ? (
-        <ParsedPDFViewer />
+        <ParsedPDFViewer ref={pdfViewerRef} />
       ) : (
-        <ActualPDFViewer document={document} />
-      )}{" "}
+        <Suspense
+          fallback={
+            <div className="w-full h-full flex items-center justify-center bg-gray-100">
+              <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+            </div>
+          }
+        >
+          <ActualPDFViewer document={document} />
+        </Suspense>
+      )}
     </div>
   );
 }

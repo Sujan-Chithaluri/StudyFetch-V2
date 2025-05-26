@@ -4,6 +4,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import MessageInput from "./MessageInput";
+import { usePdfViewer } from "@/hooks/contexts/PdfViewerContext";
 
 type Message = {
   id: string;
@@ -61,9 +62,9 @@ export default function ChatInterface({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           content: content.trim(),
-          files: files ? files.map(f => f.name) : undefined
+          files: files ? files.map((f) => f.name) : undefined,
         }),
       });
 
@@ -96,6 +97,13 @@ export default function ChatInterface({
       setIsLoading(false);
     }
   };
+
+  const { pdfViewerRef } = usePdfViewer();
+
+  useEffect(() => {
+    // Scroll to the first page when component mounts
+    pdfViewerRef?.current?.gotoPage(3, { blink: true });
+  }, [messages]);
 
   return (
     <div className={`flex flex-col ${className}`}>

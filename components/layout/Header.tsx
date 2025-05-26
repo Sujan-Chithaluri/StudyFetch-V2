@@ -17,11 +17,14 @@ export default function Header() {
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setDropdownOpen(false);
       }
     }
-    
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
@@ -29,7 +32,7 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-10 bg-white border-b border-gray-200 shadow-sm">
+    <header className="sticky top-0 z-20 bg-white border-b border-gray-200 shadow-sm">
       <div className="container mx-auto px-8 md:px-6">
         <div className="flex justify-between items-center h-14">
           <Link href="/" className="font-bold text-xl text-blue-600">
@@ -64,7 +67,7 @@ export default function Header() {
               <div className="h-8 w-24 bg-gray-200 rounded animate-pulse"></div>
             ) : isAuthenticated ? (
               <div className="relative" ref={dropdownRef}>
-                <button 
+                <button
                   onClick={() => setDropdownOpen(!dropdownOpen)}
                   className="flex items-center space-x-2 focus:outline-none"
                 >
@@ -78,36 +81,43 @@ export default function Header() {
                   <span className="text-sm text-gray-700 font-medium">
                     {session.user.name || session.user.email}
                   </span>
-                  <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    className={`h-4 w-4 text-gray-500 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} 
-                    fill="none" 
-                    viewBox="0 0 24 24" 
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className={`h-4 w-4 text-gray-500 transition-transform duration-200 ${
+                      dropdownOpen ? "rotate-180" : ""
+                    }`}
+                    fill="none"
+                    viewBox="0 0 24 24"
                     stroke="currentColor"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
                   </svg>
                 </button>
-                
+
                 {/* Dropdown Menu */}
                 {dropdownOpen && (
-                  <div className="fixed right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-200 border border-gray-200">
-                    <Link 
-                      href="/profile" 
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-40 border border-gray-200">
+                    <Link
+                      href="/profile"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       onClick={() => setDropdownOpen(false)}
                     >
                       Profile
                     </Link>
-                    <Link 
-                      href="/settings" 
+                    <Link
+                      href="/settings"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       onClick={() => setDropdownOpen(false)}
                     >
                       Settings
                     </Link>
-                    <Link 
-                      href="/change-password" 
+                    <Link
+                      href="/change-password"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       onClick={() => setDropdownOpen(false)}
                     >

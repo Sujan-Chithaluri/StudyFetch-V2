@@ -47,26 +47,28 @@ export default function SessionSidebar({
   // Function to fetch more sessions before the current set
   const fetchMoreBefore = async () => {
     if (isLoadingBefore || !showMoreBefore) return;
-    
+
     setIsLoadingBefore(true);
     try {
       const firstSessionInView = sessions[0];
-      const response = await fetch(`/api/sessions/before?type=${sessionType}&sessionId=${firstSessionInView.id}&limit=5`);
-      
+      const response = await fetch(
+        `/api/sessions/before?type=${sessionType}&sessionId=${firstSessionInView.id}&limit=5`
+      );
+
       if (!response.ok) {
-        throw new Error('Failed to fetch earlier sessions');
+        throw new Error("Failed to fetch earlier sessions");
       }
-      
+
       const data = await response.json();
-      
+
       if (data.sessions.length === 0) {
         setShowMoreBefore(false);
       } else {
-        setSessions(prev => [...data.sessions, ...prev]);
+        setSessions((prev) => [...data.sessions, ...prev]);
         setShowMoreBefore(data.hasMore);
       }
     } catch (error) {
-      console.error('Error fetching earlier sessions:', error);
+      console.error("Error fetching earlier sessions:", error);
       setShowMoreBefore(false);
     } finally {
       setIsLoadingBefore(false);
@@ -76,26 +78,28 @@ export default function SessionSidebar({
   // Function to fetch more sessions after the current set
   const fetchMoreAfter = async () => {
     if (isLoadingAfter || !showMoreAfter) return;
-    
+
     setIsLoadingAfter(true);
     try {
       const lastSessionInView = sessions[sessions.length - 1];
-      const response = await fetch(`/api/sessions/after?type=${sessionType}&sessionId=${lastSessionInView.id}&limit=5`);
-      
+      const response = await fetch(
+        `/api/sessions/after?type=${sessionType}&sessionId=${lastSessionInView.id}&limit=5`
+      );
+
       if (!response.ok) {
-        throw new Error('Failed to fetch later sessions');
+        throw new Error("Failed to fetch later sessions");
       }
-      
+
       const data = await response.json();
-      
+
       if (data.sessions.length === 0) {
         setShowMoreAfter(false);
       } else {
-        setSessions(prev => [...prev, ...data.sessions]);
+        setSessions((prev) => [...prev, ...data.sessions]);
         setShowMoreAfter(data.hasMore);
       }
     } catch (error) {
-      console.error('Error fetching later sessions:', error);
+      console.error("Error fetching later sessions:", error);
       setShowMoreAfter(false);
     } finally {
       setIsLoadingAfter(false);
@@ -107,23 +111,23 @@ export default function SessionSidebar({
       {/* Sidebar toggle button (visible when sidebar is closed) */}
       <button
         onClick={() => setIsOpen(true)}
-        className={`fixed top-20 left-0 bg-white p-2 rounded-r-md shadow-md z-20 ${
+        className={`fixed top-40 left-0 bg-blue-200 text-white p-2 rounded-r-md shadow-md z-40 ${
           isOpen ? "hidden" : "flex"
-        } items-center justify-center`}
+        } items-center justify-center hover:bg-blue-700`}
         aria-label="Open sidebar"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-5 w-5 text-gray-600"
           fill="none"
           viewBox="0 0 24 24"
+          strokeWidth={1.5}
           stroke="currentColor"
+          className="size-6"
         >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 5l7 7-7 7"
+            d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
           />
         </svg>
       </button>
@@ -135,7 +139,9 @@ export default function SessionSidebar({
         } w-64 bg-white shadow-lg transition-transform duration-300 ease-in-out z-20 flex flex-col`}
       >
         <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-          <h2 className="font-medium text-gray-800">Sessions ({currentPosition + 1} of {totalSessions})</h2>
+          <h2 className="font-medium text-gray-800">
+            Sessions ({currentPosition + 1} of {totalSessions})
+          </h2>
           <button
             onClick={() => setIsOpen(false)}
             className="text-gray-500 hover:text-gray-700"
@@ -180,7 +186,7 @@ export default function SessionSidebar({
               </svg>
               All Sessions
             </Link>
-            
+
             {/* Load More Before button */}
             {showMoreBefore && (
               <div className="py-2 text-center">
@@ -216,7 +222,7 @@ export default function SessionSidebar({
                 </button>
               </div>
             )}
-            
+
             {/* Session list */}
             {sessions.map((session) => {
               const isCurrentSession = session.id === currentSessionId;
@@ -230,19 +236,25 @@ export default function SessionSidebar({
                       : "hover:bg-gray-100"
                   }`}
                 >
-                  <div className={`text-sm font-medium line-clamp-1 ${
-                    isCurrentSession ? "text-blue-700" : "text-gray-800"
-                  }`}>
-                    {session.title || session.document?.title || "Untitled Session"}
+                  <div
+                    className={`text-sm font-medium line-clamp-1 ${
+                      isCurrentSession ? "text-blue-700" : "text-gray-800"
+                    }`}
+                  >
+                    {session.title ||
+                      session.document?.title ||
+                      "Untitled Session"}
                     {isCurrentSession && (
                       <span className="ml-1 text-xs bg-blue-600 text-white px-1.5 py-0.5 rounded-full">
                         Current
                       </span>
                     )}
                   </div>
-                  <div className={`text-xs mt-1 flex justify-between ${
-                    isCurrentSession ? "text-blue-600" : "text-gray-500"
-                  }`}>
+                  <div
+                    className={`text-xs mt-1 flex justify-between ${
+                      isCurrentSession ? "text-blue-600" : "text-gray-500"
+                    }`}
+                  >
                     <span>
                       {formatDistanceToNow(new Date(session.updatedAt), {
                         addSuffix: true,
@@ -253,7 +265,7 @@ export default function SessionSidebar({
                 </Link>
               );
             })}
-            
+
             {/* Load More After button */}
             {showMoreAfter && (
               <div className="py-2 text-center">
