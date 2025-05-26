@@ -5,6 +5,7 @@ import { useState, useRef, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import MessageInput from "./MessageInput";
 import { usePdfViewer } from "@/hooks/contexts/PdfViewerContext";
+import { Markdown } from "@/components/ui/Markdown";
 
 type Message = {
   id: string;
@@ -18,17 +19,20 @@ type ChatInterfaceProps = {
   sessionId: string;
   initialMessages: Message[];
   className?: string;
+  documentContent?: string;
 };
 
 export default function ChatInterface({
   sessionId,
   initialMessages,
   className = "",
+  documentContent,
 }: ChatInterfaceProps) {
   const { data: session } = useSession();
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { pdfViewerRef } = usePdfViewer();
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -37,6 +41,88 @@ export default function ChatInterface({
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  // Process AI responses for page references and highlights
+  const processAIResponse = (response: string) => {
+    if (!pdfViewerRef?.current) return;
+
+    // Look for page references like "On page 5..." or "[Page 5]"
+    const pageRefs = response.match(/(?:on page|page|p\.)\s*(\d+)/gi);
+
+    if (pageRefs && pageRefs.length > 0) {
+      // Extract the page number from the first reference
+      const pageMatch = pageRefs[0].match(/\d+/);
+      if (pageMatch) {
+        const pageNum = parseInt(pageMatch[0]) - 1; // Convert to 0-based index
+        // Navigate to that page with a slight delay to ensure PDF is loaded
+        setTimeout(() => {
+          pdfViewerRef.current?.gotoPage(pageNum, { blink: true });
+        }, 500);
+      }
+    }
+
+    // Look for quoted text to highlight
+    const quotes = response.match(/"([^"]+)"|'([^']+)'/g);
+    if (quotes && quotes.length > 0) {
+      // Extract the text to highlight from the first quote
+      const textToHighlight = quotes[0].replace(/['"]/g, "");
+      // Highlight the text with a slight delay
+      setTimeout(() => {
+        pdfViewerRef.current?.highlight(textToHighlight);
+      }, 800);
+    }
+  };
+
+  const processCommands = (response: string) => {
+    if (!pdfViewerRef?.current) return;
+
+    // Extract commands section
+    const commandsMatch = response.match(/commands:\s*([\s\S]+)$/);
+    if (!commandsMatch || !commandsMatch[1]) return;
+
+    const commandsText = commandsMatch[1].trim();
+
+    // Process page command
+    const pageMatch = commandsText.match(/\/page\/(\d+)/);
+    if (pageMatch && pageMatch[1]) {
+      const pageNum = parseInt(pageMatch[1]) - 1; // Convert to 0-based index
+      setTimeout(() => {
+        pdfViewerRef.current?.gotoPage(pageNum, { blink: true });
+      }, 500);
+    }
+
+    // Process highlight command
+    const highlightMatch = commandsText.match(/\/highlight\/([^\n"]+)/);
+    if (highlightMatch && highlightMatch[1]) {
+      const textToHighlight = highlightMatch[1].trim();
+      setTimeout(() => {
+        pdfViewerRef.current?.highlight(textToHighlight);
+      }, 800);
+    }
+
+    // Process annotate commands
+    const annotateMatches = Array.from(
+      commandsText.matchAll(/\/annotate\/(\d+)\/([^\n]+)/g)
+    );
+    if (annotateMatches.length > 0) {
+      const annotations = annotateMatches.map((match) => ({
+        page: parseInt(match[1]) - 1,
+        annotation: match[2].trim(),
+      }));
+
+      setTimeout(() => {
+        if (pdfViewerRef.current?.processNewAnnotations) {
+          pdfViewerRef.current.processNewAnnotations(annotations);
+        }
+      }, 1000);
+    }
+  };
+
+  // Add this function to clean the response before displaying it
+  const cleanAIResponse = (response: string): string => {
+    // Remove commands section from the displayed message
+    return response.replace(/\ncommands:[\s\S]+$/, "").trim();
   };
 
   const handleSendMessage = async (content: string, files?: File[]) => {
@@ -65,11 +151,16 @@ export default function ChatInterface({
         body: JSON.stringify({
           content: content.trim(),
           files: files ? files.map((f) => f.name) : undefined,
+          documentContent: documentContent,
         }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to send message");
+        const errorText = await response.text();
+        console.error("API error response:", errorText);
+        throw new Error(
+          `Failed to send message: ${response.status} ${errorText}`
+        );
       }
 
       const data = await response.json();
@@ -81,8 +172,17 @@ export default function ChatInterface({
           .concat(data.userMessage)
       );
 
-      // Add AI response
-      setMessages((prev) => [...prev, data.aiMessage]);
+      // Add AI response with cleaned content
+      setMessages((prev) => [
+        ...prev,
+        {
+          ...data.aiMessage,
+          content: cleanAIResponse(data.aiMessage.content),
+        },
+      ]);
+
+      // Process the AI response for commands
+      processCommands(data.aiMessage.content);
     } catch (error) {
       console.error("Error sending message:", error);
       // Show error in UI
@@ -98,13 +198,7 @@ export default function ChatInterface({
     }
   };
 
-  const { pdfViewerRef } = usePdfViewer();
-
-  useEffect(() => {
-    // Scroll to the first page when component mounts
-    pdfViewerRef?.current?.gotoPage(3, { blink: true });
-  }, [messages]);
-
+  // Rest of the component...
   return (
     <div className={`flex flex-col ${className}`}>
       {messages.length === 0 ? (
@@ -159,7 +253,11 @@ export default function ChatInterface({
                       : "bg-gray-100 text-gray-800"
                   }`}
                 >
-                  <p className="whitespace-pre-wrap">{message.content}</p>
+                  {message.isUserMessage ? (
+                    <p className="whitespace-pre-wrap">{message.content}</p>
+                  ) : (
+                    <Markdown content={message.content} />
+                  )}
                   <div
                     className={`text-xs mt-1 ${
                       message.isUserMessage ? "text-blue-200" : "text-gray-500"
@@ -173,6 +271,7 @@ export default function ChatInterface({
                 </div>
               </div>
             ))}
+
             <div ref={messagesEndRef} />
           </div>
 

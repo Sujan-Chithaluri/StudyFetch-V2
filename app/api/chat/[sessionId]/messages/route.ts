@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import prisma from "@/lib/prisma";
+import { generateChatResponse } from "@/lib/ai/chat";
+import { Message } from "ai";
 
 export async function POST(
   request: NextRequest,
@@ -14,8 +16,9 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { content } = await request.json();
     const sessionId = params.sessionId;
+    const { content, documentContent } = await request.json();
+
 
     // Verify the chat session exists and belongs to the user
     const chatSession = await prisma.chatSession.findUnique({
@@ -24,7 +27,11 @@ export async function POST(
         userId: session.user.id,
       },
       include: {
-        document: true,
+        messages: {
+          orderBy: {
+            createdAt: "asc",
+          },
+        },
       },
     });
 
@@ -42,16 +49,35 @@ export async function POST(
       },
     });
 
-    // Generate AI response
-    // In a real app, you would call your AI service here
-    const aiResponse = `This is a placeholder AI response. In a real application, this would be generated based on the document content and user query: "${content}"`;
+    // Convert database messages to AI SDK messages
+    const aiMessages: Message[] = chatSession.messages.map(msg => ({
+      id: msg.id,
+      role: msg.isUserMessage ? 'user' : 'assistant',
+      content: msg.content
+    }));
 
-    // Create AI message
+    // Add the new user message
+    aiMessages.push({
+      id: userMessage.id,
+      role: 'user',
+      content
+    });
+
+    // Generate AI response
+    let aiResponseText = '';
+    try {
+      aiResponseText = await generateChatResponse(aiMessages, documentContent);
+    } catch (error) {
+      console.error("Error generating AI response:", error);
+      aiResponseText = "I'm sorry, I encountered an error while processing your request.";
+    }
+
+    // Create AI message in database
     const aiMessage = await prisma.message.create({
       data: {
-        content: aiResponse,
+        content: aiResponseText,
         isUserMessage: false,
-        userId: session.user.id, // AI messages are still associated with the user
+        userId: session.user.id,
         chatSessionId: sessionId,
       },
     });

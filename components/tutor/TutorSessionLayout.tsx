@@ -1,7 +1,7 @@
 // components/tutor/TutorSessionLayout.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import DocumentViewer from "@/components/document/DocumentViewer";
 import ChatInterface from "@/components/chat/ChatInterface";
 import SessionSidebar from "@/components/layout/SessionSidebar";
@@ -28,6 +28,31 @@ export default function TutorSessionLayout({
   pdfContent,
 }: TutorSessionLayoutProps) {
   const { setPdfText } = usePdfStore();
+
+  const documentContent = useMemo(() => {
+    if (!currentSession.document?.content) return undefined;
+
+    const docContent = currentSession.document.content as any;
+
+    // Check if it has pages array (from our parser)
+    if (Array.isArray(docContent.pages)) {
+      // Format each page with its number and text
+      return docContent.pages
+        .map((page) => `[Page ${page.pageNumber}]\n${page.text}`)
+        .join("\n\n")
+        .slice(0, 15000); // Limit to avoid token limits
+    }
+
+    // Fallback for other content formats
+    if (Array.isArray(docContent.content)) {
+      return docContent.content
+        .map((text: string, i: number) => `[Page ${i + 1}]\n${text}`)
+        .join("\n\n")
+        .slice(0, 15000);
+    }
+
+    return undefined;
+  }, [currentSession.document]);
 
   const [showParsedPDF, setShowParsedPDF] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -80,9 +105,7 @@ export default function TutorSessionLayout({
               {/* PDF Toggle Switch */}
 
               <div className="flex items-center">
-                <span className="text-sm text-gray-600 mr-2">
-                  {showParsedPDF ? "Parsed PDF" : "Actual PDF"}
-                </span>
+                <span className="text-sm text-gray-600 mr-2">Parsed PDF</span>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
                     type="checkbox"
@@ -152,6 +175,7 @@ export default function TutorSessionLayout({
               sessionId={currentSession.id}
               initialMessages={currentSession.messages}
               className="h-full"
+              documentContent={documentContent}
             />
           </div>
 

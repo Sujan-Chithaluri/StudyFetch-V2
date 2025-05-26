@@ -20,7 +20,6 @@ export default function PdfParserTest() {
     try {
       const parsedPdf = await parsePDF(file);
       setResult(parsedPdf);
-      console.log("PDF parsed successfully:", parsedPdf);
     } catch (err) {
       console.error("Error parsing PDF:", err);
       setError(err instanceof Error ? err.message : String(err));

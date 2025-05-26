@@ -7,7 +7,6 @@ import { put } from '@vercel/blob';
 
 export async function POST(request: NextRequest) {
   try {
-    console.log("Document upload started");
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -26,7 +25,6 @@ export async function POST(request: NextRequest) {
     let parsedContent;
     try {
       parsedContent = contentJson ? JSON.parse(contentJson) : null;
-      console.log("Received parsed content from client");
     } catch (error) {
       console.error("Error parsing content JSON:", error);
       parsedContent = null;
@@ -40,19 +38,14 @@ export async function POST(request: NextRequest) {
         totalPages: 0,
         needsClientParsing: true
       };
-      console.log("Using placeholder content");
     }
     
-    console.log("Uploading file to Vercel Blob:", file.name);
-    // Upload file to Vercel Blob
     const filename = `${session.user.id}/${Date.now()}-${file.name}`;
     const blob = await put(filename, file, {
       access: 'public',
       contentType: file.type,
     });
-    console.log("File uploaded successfully:", blob.url);
     
-    console.log("Creating document in database");
     // Create document in database with parsed content
     const document = await prisma.document.create({
       data: {
@@ -70,9 +63,7 @@ export async function POST(request: NextRequest) {
         }
       }
     });
-    console.log("Document created:", document.id);
     
-    console.log("Creating chat session");
     // Create chat session
     const chatSession = await prisma.chatSession.create({
       data: {
@@ -82,7 +73,6 @@ export async function POST(request: NextRequest) {
         documentId: document.id,
       }
     });
-    console.log("Chat session created:", chatSession.id);
     
     return NextResponse.json({ 
       success: true, 
