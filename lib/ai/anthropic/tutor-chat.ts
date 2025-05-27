@@ -53,7 +53,7 @@ commands:
 
     // Generate AI response
     const result = await generateText({
-      model: anthropic('claude-3-7-sonnet-20250219'),
+      model: anthropic('claude-3-5-haiku-20241022'),
       system: systemPrompt,
       prompt: prompt,
     });

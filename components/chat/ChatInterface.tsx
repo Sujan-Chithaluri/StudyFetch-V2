@@ -256,7 +256,7 @@ export default function ChatInterface({
                   {message.isUserMessage ? (
                     <p className="whitespace-pre-wrap">{message.content}</p>
                   ) : (
-                    <Markdown content={message.content} />
+                    <Markdown content={cleanAIResponse(message.content)} />
                   )}
                   <div
                     className={`text-xs mt-1 ${
