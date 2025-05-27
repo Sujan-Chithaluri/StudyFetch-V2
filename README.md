@@ -73,6 +73,12 @@ BLOB_READ_WRITE_TOKEN="your-vercel-blob-token"
 
 # OpenAI
 OPENAI_API_KEY="your-openai-api-key"
+
+or
+
+# Anthropic
+ANTHROPIC_API_KEY="your-anthropic-api-key"
+
 ```
 
 To generate a secure `AUTH_SECRET`:
