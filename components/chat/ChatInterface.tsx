@@ -93,11 +93,12 @@ export default function ChatInterface({
     }
 
     // Process highlight command
-    const highlightMatch = commandsText.match(/\/highlight\/([^\n"]+)/);
+    const highlightMatch = commandsText.match(/\/highlight\/(\d+)\/([^\n"]+)/);
     if (highlightMatch && highlightMatch[1]) {
-      const textToHighlight = highlightMatch[1].trim();
+      const pageNum = parseInt(highlightMatch[1]) - 1;
+      const textToHighlight = highlightMatch[2].trim();
       setTimeout(() => {
-        pdfViewerRef.current?.highlight(textToHighlight);
+        pdfViewerRef.current?.scrollToPosition(pageNum, textToHighlight, undefined, "highlight");
       }, 800);
     }
 

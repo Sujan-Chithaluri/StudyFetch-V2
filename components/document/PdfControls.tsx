@@ -147,14 +147,14 @@ const PdfControls: React.FC<PdfControlsProps> = ({
           </button>
         </div>
 
-        <button
+        {/* <button
           onClick={onExport}
           className="bg-green-600 hover:bg-green-700 rounded px-3 py-1 flex items-center"
           aria-label="Export PDF"
         >
           <Download size={16} className="mr-1" />
           <span>Export</span>
-        </button>
+        </button> */}
       </div>
     </div>
   );

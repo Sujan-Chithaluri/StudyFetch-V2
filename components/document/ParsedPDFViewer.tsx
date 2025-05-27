@@ -9,12 +9,12 @@ import React, {
 } from "react";
 import { usePdfStore } from "@/hooks/stores/PdfStore";
 import PdfControls from "./PdfControls";
-import html2pdf from "html2pdf.js";
+// import html2pdf from "html2pdf.js";
 
 export interface ParsedPDFViewerHandle {
   gotoPage: (page: number, options?: { blink?: boolean }) => void;
   highlight: (term: string, page?: number) => void;
-  scrollToPosition: (page: number, term: string, annotation?: string) => void;
+  scrollToPosition: (page: number, term: string, annotation?: string, style?: "highlight" | "search" | "citation") => void;
   processNewAnnotations: (
     annotations: Array<{ page: number; term?: string; annotation?: string }>
   ) => void;
@@ -52,7 +52,7 @@ const ParsedPDFViewer = forwardRef<ParsedPDFViewerHandle, ParsedPDFViewerProps>(
   (
     {
       gotoPage: initialGotoPage,
-      shouldBlink = false,
+      shouldBlink = true,
       highlightTerm = "",
       highlightStyle = "red-circle",
       searchStyle = "bg-yellow",
@@ -80,6 +80,7 @@ const ParsedPDFViewer = forwardRef<ParsedPDFViewerHandle, ParsedPDFViewerProps>(
     >({});
     const [activeHighlight, setActiveHighlight] =
       useState<HighlightState | null>(null);
+    const [hStyle, setHStyle] = useState<"highlight" | "search" | "citation">("highlight");
     const [typingAnnotation, setTypingAnnotation] =
       useState<TypingState | null>(null);
     const [annotationQueue, setAnnotationQueue] = useState<AnnotationItem[]>(
@@ -100,8 +101,8 @@ const ParsedPDFViewer = forwardRef<ParsedPDFViewerHandle, ParsedPDFViewerProps>(
       if (el) {
         el.scrollIntoView({ behavior: "smooth", block: "start" });
         if (blink) {
-          el.classList.add("pdf-highlight-bg");
-          setTimeout(() => el.classList.remove("pdf-highlight-bg"), 2000);
+          el.classList.add("bg-blue-200");
+          setTimeout(() => el.classList.remove("bg-blue-200"), 3000);
         }
         setCurrentPage(index);
       }
@@ -122,9 +123,12 @@ const ParsedPDFViewer = forwardRef<ParsedPDFViewerHandle, ParsedPDFViewerProps>(
 
     // Core functionality
     const scrollToPosition = useCallback(
-      (page: number, term: string, annotation?: string) => {
+      (page: number, term: string, annotation?: string, style?: string) => {
         scrollToPage(page, true);
         setActiveHighlight({ page, term, annotation });
+        if (style) {
+          setHStyle(style as "highlight" | "search" | "citation"); ;
+        }
 
         if (annotation) {
           const isInQueue = annotationQueue.some(
@@ -139,7 +143,7 @@ const ParsedPDFViewer = forwardRef<ParsedPDFViewerHandle, ParsedPDFViewerProps>(
           }
         }
 
-        setTimeout(() => setActiveHighlight(null), 5000);
+        setTimeout(() => setActiveHighlight(null), 10000);
       },
       [scrollToPage, annotationQueue, typingAnnotation, addAnnotation]
     );
@@ -175,9 +179,12 @@ const ParsedPDFViewer = forwardRef<ParsedPDFViewerHandle, ParsedPDFViewerProps>(
     const handleExport = useCallback(() => {
       const el = document.getElementById("pdf-content");
       if (el) {
-        html2pdf().set({ filename: "exported.pdf" }).from(el).save();
+        // html2pdf().set({ filename: "exported.pdf" }).from(el).save();
       }
     }, []);
+
+
+
 
     const goToNextMatch = useCallback(() => {
       const { matches, currentIndex } = searchState;
@@ -255,7 +262,7 @@ const ParsedPDFViewer = forwardRef<ParsedPDFViewerHandle, ParsedPDFViewerProps>(
           processedText = highlightText(
             processedText as string,
             activeHighlight.term,
-            "citation",
+            hStyle,
             true
           ) as string;
         }
@@ -264,7 +271,7 @@ const ParsedPDFViewer = forwardRef<ParsedPDFViewerHandle, ParsedPDFViewerProps>(
           processedText = highlightText(
             processedText as string,
             highlightTerm,
-            "highlight"
+            hStyle
           ) as string;
         }
 
@@ -272,13 +279,13 @@ const ParsedPDFViewer = forwardRef<ParsedPDFViewerHandle, ParsedPDFViewerProps>(
           processedText = highlightText(
             processedText as string,
             searchState.query,
-            "search"
+            "search",
           ) as string;
         }
 
         return processedText;
       },
-      [activeHighlight, highlightTerm, searchState.query, highlightText]
+      [activeHighlight, highlightTerm, searchState.query, highlightText, hStyle]
     );
 
     // Effects
