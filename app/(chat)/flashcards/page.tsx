@@ -1,4 +1,3 @@
-// app/(chat)/flashcards/page.tsx
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -25,7 +24,6 @@ export default async function FlashcardsPage({
   const limit = parseInt(searchParams.limit || "6"); // Default to 6 items per page
   const offset = (currentPage - 1) * limit;
   
-  // Get total count for pagination
   const totalSessions = await prisma.chatSession.count({
     where: {
       userId: session.user.id,

@@ -72,11 +72,9 @@ export default async function TutorSessionPage({
     // Extract PDF content from document if available
     let pdfContent = [];
     if (chatSession.document?.content) {
-      // Check if content has pages array (from our parser)
       if (Array.isArray(chatSession.document.content?.pages)) {
         pdfContent = chatSession.document.content?.pages.map(page => page.text);
       } 
-      // Check if content has content array (direct text array)
       else if (Array.isArray(chatSession.document.content?.content)) {
         pdfContent = chatSession.document.content?.content;
       }

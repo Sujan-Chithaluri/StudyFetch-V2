@@ -20,12 +20,10 @@ export default async function TutorPage({
     redirect("/login");
   }
   
-  // Parse pagination params from query params
   const currentPage = parseInt(searchParams.page || "1");
-  const limit = parseInt(searchParams.limit || "6"); // Default to 6 items per page
+  const limit = parseInt(searchParams.limit || "6");
   const offset = (currentPage - 1) * limit;
   
-  // Get total count for pagination
   const totalSessions = await prisma.chatSession.count({
     where: {
       userId: session.user.id,
@@ -35,7 +33,6 @@ export default async function TutorPage({
   
   const totalPages = Math.ceil(totalSessions / limit);
   
-  // Fetch sessions for current page
   const tutorSessions = await prisma.chatSession.findMany({
     where: {
       userId: session.user.id,

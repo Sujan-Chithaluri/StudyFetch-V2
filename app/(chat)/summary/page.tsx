@@ -1,4 +1,3 @@
-// app/(chat)/summary/page.tsx
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
