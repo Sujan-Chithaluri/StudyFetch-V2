@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import prisma from "@/lib/prisma";
-import { generateChatResponse } from "@/lib/ai/chat";
+import { generateChatResponse } from "@/lib/ai/anthropic/tutor-chat"; // Adjust the import based on your AI library
 import { Message } from "ai";
 
 export async function POST(

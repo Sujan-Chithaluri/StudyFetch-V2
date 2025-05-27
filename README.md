@@ -40,10 +40,9 @@ StudyFetch is an AI-powered study assistant that helps you understand and learn 
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/yourusername/studyfetch.git
-cd studyfetch
+git clone project-url
+cd folder-name
 ```
-
 ### 2. Install dependencies
 
 ```bash
