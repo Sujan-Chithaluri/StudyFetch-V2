@@ -58,3 +58,45 @@ export async function DELETE(
     return NextResponse.json({ error: 'Failed to delete document' }, { status: 500 });
   }
 }
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const documentId = params.id;
+    const { content } = await request.json();
+    
+    // Check if document exists and belongs to user
+    const document = await prisma.document.findUnique({
+      where: {
+        id: documentId,
+        userId: session.user.id,
+      },
+    });
+
+    if (!document) {
+      return NextResponse.json({ error: 'Document not found' }, { status: 404 });
+    }
+
+    // Update document content
+    const updatedDocument = await prisma.document.update({
+      where: {
+        id: documentId,
+      },
+      data: {
+        content,
+      },
+    });
+
+    return NextResponse.json({ success: true, document: updatedDocument });
+  } catch (error) {
+    console.error('Error updating document:', error);
+    return NextResponse.json({ error: 'Failed to update document' }, { status: 500 });
+  }
+}

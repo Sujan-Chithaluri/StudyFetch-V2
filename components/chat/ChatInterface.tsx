@@ -74,6 +74,52 @@ export default function ChatInterface({
     }
   };
 
+  const addNewAnnotationsToDb = async (
+    annotations: { page: number; annotation: string }[]
+  ) => {
+    try {
+      // Fetch the current session document
+      const response = await fetch(`/api/sessions/${sessionId}`);
+      const data = await response.json();
+      const document = data.document;
+
+      if (!document || !document.content) return;
+
+      // Clone the document content
+      const updatedContent = JSON.parse(JSON.stringify(document.content));
+
+      annotations.forEach(({ page, annotation }) => {
+        const pageIndex = updatedContent.pages.findIndex(
+          (p: any) => p.pageNumber === page + 1
+        );
+
+        if (pageIndex !== -1) {
+          if (!updatedContent.pages[pageIndex].annotations) {
+            updatedContent.pages[pageIndex].annotations = [];
+          }
+
+          updatedContent.pages[pageIndex].annotations.push(annotation);
+        }
+      });
+
+      await fetch(`/api/documents/${document.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ content: updatedContent }),
+      });
+
+      annotations.forEach(({ page, annotation }) => {
+        if (pdfViewerRef.current?.processNewAnnotations) {
+          pdfViewerRef.current.processNewAnnotations(annotations);
+        }
+      });
+    } catch (error) {
+      console.error("Error saving annotations:", error);
+    }
+  };
+
   const processCommands = (response: string) => {
     if (!pdfViewerRef?.current) return;
 
@@ -91,10 +137,9 @@ export default function ChatInterface({
       setTimeout(() => {
         pdfViewerRef.current?.gotoPage(pageNum, true);
       }, 500);
-      currentDelay = 1000; // Start other commands after page navigation
+      currentDelay = 1000;
     }
 
-    // Process highlight commands - remove duplicate implementation
     const highlightMatches = Array.from(
       commandsText.matchAll(/\/highlight\/(\d+)\/([^\n"]+)/g)
     );
@@ -131,9 +176,7 @@ export default function ChatInterface({
       }));
 
       setTimeout(() => {
-        if (pdfViewerRef.current?.processNewAnnotations) {
-          pdfViewerRef.current.processNewAnnotations(annotations);
-        }
+        addNewAnnotationsToDb(annotations);
       }, currentDelay + 1000);
     }
   };

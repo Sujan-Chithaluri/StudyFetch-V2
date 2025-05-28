@@ -12,7 +12,7 @@ import PdfControls from "./PdfControls";
 // import html2pdf from "html2pdf.js";
 
 export interface ParsedPDFViewerHandle {
-  gotoPage: (page: number, blink?: boolean ) => void;
+  gotoPage: (page: number, blink?: boolean) => void;
   highlight: (term: string, page?: number) => void;
   scrollToPosition: (
     page: number,
@@ -65,7 +65,7 @@ const ParsedPDFViewer = forwardRef<ParsedPDFViewerHandle, ParsedPDFViewerProps>(
     ref
   ) => {
     // State management
-    const { pdfText } = usePdfStore();
+    const { pdfText, pdfAnnotations } = usePdfStore();
     const containerRef = useRef<HTMLDivElement>(null);
     const [currentPage, setCurrentPage] = useState(0);
     const [scale, setScale] = useState(1.0);
@@ -80,7 +80,8 @@ const ParsedPDFViewer = forwardRef<ParsedPDFViewerHandle, ParsedPDFViewerProps>(
     // Annotation state
     const [pageAnnotations, setPageAnnotations] = useState<
       Record<number, string[]>
-    >({});
+    >(pdfAnnotations || {});
+
     const [activeHighlight, setActiveHighlight] =
       useState<HighlightState | null>(null);
     const [hStyle, setHStyle] = useState<"highlight" | "search" | "citation">(
@@ -369,6 +370,12 @@ const ParsedPDFViewer = forwardRef<ParsedPDFViewerHandle, ParsedPDFViewerProps>(
         return () => clearTimeout(timer);
       }
     }, [typingAnnotation, addAnnotation]);
+
+    useEffect(() => {
+      if (pdfAnnotations && Object.keys(pdfAnnotations).length > 0) {
+        setPageAnnotations(pdfAnnotations);
+      }
+    }, [pdfAnnotations]);
 
     // Setup intersection observer
     useEffect(() => {

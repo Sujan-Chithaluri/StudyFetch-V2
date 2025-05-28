@@ -27,9 +27,9 @@ export default function TutorSessionLayout({
   currentPosition,
   pdfContent,
 }: TutorSessionLayoutProps) {
-  const { setPdfText } = usePdfStore();
+  const { setPdfText, setAnnotations } = usePdfStore();
 
-  const documentContent = useMemo(() => {
+  const documentContentForAi = useMemo(() => {
     if (!currentSession.document?.content) return undefined;
 
     const docContent = currentSession.document.content as any;
@@ -54,14 +54,54 @@ export default function TutorSessionLayout({
     return undefined;
   }, [currentSession.document]);
 
+  const pdfTextContent = useMemo(() => {
+    if (!currentSession.document?.content) return undefined;
+
+    const docContent = currentSession.document.content as any;
+
+    let pdfContent = [];
+    if (currentSession.document?.content) {
+      if (Array.isArray(currentSession.document.content?.pages)) {
+        pdfContent = currentSession.document.content?.pages.map(
+          (page) => page.text
+        );
+      }
+    }
+
+    return pdfContent;
+  }, [currentSession.document]);
+
+  const pdfAnnotations = useMemo(() => {
+    if (!currentSession.document?.content) return undefined;
+
+    const docContent = currentSession.document.content as any;
+    const annotationsMap: Record<number, string[]> = {};
+
+    if (docContent && Array.isArray(docContent.pages)) {
+      docContent.pages.forEach((page) => {
+        if (page.pageNumber && Array.isArray(page.annotations)) {
+          annotationsMap[page.pageNumber - 1] = page.annotations;
+        }
+      });
+    }
+
+    return annotationsMap;
+  }, [currentSession.document]);
+
   const [showParsedPDF, setShowParsedPDF] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
-    if (pdfContent && pdfContent.length > 0) {
-      setPdfText(pdfContent);
+    if (pdfTextContent && pdfTextContent.length > 0) {
+      setPdfText(pdfTextContent);
     }
-  }, [pdfContent, setPdfText]);
+  }, [pdfTextContent, setPdfText]);
+
+  useEffect(() => {
+    if (pdfAnnotations) {
+      setAnnotations(pdfAnnotations);
+    }
+  }, [pdfAnnotations, setAnnotations]);
 
   const handleDeleteSession = async () => {
     try {
@@ -175,7 +215,7 @@ export default function TutorSessionLayout({
               sessionId={currentSession.id}
               initialMessages={currentSession.messages}
               className="h-full"
-              documentContent={documentContent}
+              documentContent={documentContentForAi}
             />
           </div>
 
