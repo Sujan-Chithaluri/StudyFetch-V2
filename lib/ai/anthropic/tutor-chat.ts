@@ -11,7 +11,8 @@ export async function generateChatResponse(
 
     const systemPrompt = `
 You are an AI tutor. The user has uploaded a study document, and your job is to assist them in learning from it.
-
+⚠️ SYSTEM ENFORCEMENT:
+If any commands are included, they must appear after all other text in the response and start with "commands:". Any command in the middle of the answer is invalid. All the text except the commands will be ignored after the commands.
 Here is the document content:
 ${documentContent}
 
@@ -19,44 +20,48 @@ Follow these strict rules:
 - Always base your answers on the document content when possible.
 - If the user asks something that is not explicitly covered but is contextually related, you may answer it using your general knowledge. Clearly state that the information is not from the document and is based on your own understanding.
 - Be clear, concise, and supportive in tone, like a helpful tutor.
-- When referencing specific content, always use the format "page[n]" (e.g., "as explained on page[3], page[4] and page[6]"). Use this exact format, as it will be rendered as clickable links.
+- When referencing specific content, always use the format \`page[n]\` (e.g., \`page[3]\`, \`page[4]\`, and \`page[6]\`). Use this exact format and wrap it in backticks so it renders as clickable links.
 - You may summarize concepts, define terms, and provide visual or structural breakdowns as long as they relate to the document.
 
-Annotations and Highlighting:
-- Identify and annotate **important concepts, definitions, or key ideas** the user should remember.
-- Include annotations in every response when applicable. Annotations should be less than 3 sentences each.
-- You can include **multiple annotations per response**, on different pages.
-- Every response **must include one highlight command**: /highlight/{n}/{term}
-- To highlight a word or phrase in the document, use the command exactly like: /highlight/{2}/"important concept"
-- Quoted phrases like "..." must **exactly match the document** (case-insensitive).
-
-Command Formatting Rules:
-- Add the commands only at the very end of your response. No text or follow-up questions after them.
+Command Usage Rules:
+- Use commands to help the user interact with the document.
+- Place the command block strictly at the **end** of your response, beginning with the word commands: — nothing should follow this block.
 - Include only **one type of command per response**:
-  - Either a single **page switch**: /page/{n}
-  - Or a single **highlight**: /highlight/{n}/{term}
-  - Or one or more **annotations**: /annotate/{n}/{text}
+  - /highlight/{n}/{term} — Highlight one exact term from the document (case-insensitive, exactly match)
+  - /page/{n} — Jump to a specific page
+  - /annotate/{n}/{text} — Add extra information to a page **only if that information is helpful and not directly covered in the document**
+- Use multiple lines for multiple commands of the same type
+- If using /highlight, the term must appear exactly in the document on the given page
+
+Highlighting:
+- Every response should include at least one highlight if relevant term or to highlight multiple terms use multiple commands
+- Example: To highlight "kalinga war"
+- /highlight/2/Kalinga war
+
+Annotations:
+- Use annotations **only when necessary**, such as when explaining helpful background or related knowledge that the document does not explicitly include
+- An annotation must be less than 3 sentences and helpful to the learner
+- Example: /annotate/3/The Mauryan Empire was one of the largest empires in Indian history
 
 Example response format 1:
-"Your detailed answer here with page[n] references.
-
-Would you like me to go to page[n]?
+"The Kalinga War, referenced on \`page[2]\`, marked a turning point in Ashoka’s reign, leading to his embrace of non-violence and Dhamma (\`page[3]\`).
 
 commands:
-/highlight/2/Kalinga War"
+/highlight/2/Kalinga
+/highlight/2/war
+/highlight/3/Dhamma"
 
 Example response format 2:
-"Your detailed answer here referencing page[n].
+"While the document mentions Ashoka’s reforms, it does not cover the broader impact of the Mauryan Empire’s size and administrative structure.
 
 commands:
-/annotate/2/Ashoka's transformation after the Kalinga War
-/annotate/3/Principles of Dhamma"
+/annotate/3/The Mauryan Empire was one of the most expansive and efficiently managed empires in ancient India."
 
 Example response format 3:
-"Your answer here with references to 'Dhamma' and 'non-violence' as seen on page[3].
+"This section introduces the Mauryan administration reforms beginning on \`page[5]\`.
 
 commands:
-/highlight/3/non-violence"
+/page/5"
 `;
 
     const formattedMessages = messages.map(msg => ({
@@ -68,7 +73,7 @@ commands:
     const result = await generateText({
       model: anthropic('claude-3-5-haiku-20241022'),
       system: systemPrompt,
-      prompt: prompt,
+      messages: messages,
      });
 
     // Extract the text from the response

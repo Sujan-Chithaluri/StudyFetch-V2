@@ -14,7 +14,11 @@ import PdfControls from "./PdfControls";
 export interface ParsedPDFViewerHandle {
   gotoPage: (page: number, options?: { blink?: boolean }) => void;
   highlight: (term: string, page?: number) => void;
-  scrollToPosition: (page: number, term: string, annotation?: string, style?: "highlight" | "search" | "citation") => void;
+  scrollToPosition: (
+    page: number,
+    term: string,
+    style: "highlight" | "search" | "citation"
+  ) => void;
   processNewAnnotations: (
     annotations: Array<{ page: number; term?: string; annotation?: string }>
   ) => void;
@@ -45,7 +49,6 @@ interface TypingState {
 interface HighlightState {
   page: number;
   term: string;
-  annotation?: string;
 }
 
 const ParsedPDFViewer = forwardRef<ParsedPDFViewerHandle, ParsedPDFViewerProps>(
@@ -80,7 +83,9 @@ const ParsedPDFViewer = forwardRef<ParsedPDFViewerHandle, ParsedPDFViewerProps>(
     >({});
     const [activeHighlight, setActiveHighlight] =
       useState<HighlightState | null>(null);
-    const [hStyle, setHStyle] = useState<"highlight" | "search" | "citation">("highlight");
+    const [hStyle, setHStyle] = useState<"highlight" | "search" | "citation">(
+      "highlight"
+    );
     const [typingAnnotation, setTypingAnnotation] =
       useState<TypingState | null>(null);
     const [annotationQueue, setAnnotationQueue] = useState<AnnotationItem[]>(
@@ -108,6 +113,18 @@ const ParsedPDFViewer = forwardRef<ParsedPDFViewerHandle, ParsedPDFViewerProps>(
       }
     }, []);
 
+    const scrollToAnnotation = useCallback((index: number, blink = false) => {
+      const el = document.getElementById(`chunk-${index}-annotations`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        if (blink) {
+          el.classList.add("bg-blue-200");
+          setTimeout(() => el.classList.remove("bg-blue-200"), 3000);
+        }
+        setCurrentPage(index);
+      }
+    }, []);
+
     const addAnnotation = useCallback((page: number, text: string) => {
       setPageAnnotations((prev) => {
         const pageAnnos = prev[page] || [];
@@ -123,29 +140,18 @@ const ParsedPDFViewer = forwardRef<ParsedPDFViewerHandle, ParsedPDFViewerProps>(
 
     // Core functionality
     const scrollToPosition = useCallback(
-      (page: number, term: string, annotation?: string, style?: string) => {
+      (
+        page: number,
+        term: string,
+        style: "highlight" | "search" | "citation"
+      ) => {
         scrollToPage(page, true);
-        setActiveHighlight({ page, term, annotation });
-        if (style) {
-          setHStyle(style as "highlight" | "search" | "citation"); ;
-        }
+        setActiveHighlight({ page, term });
+        setHStyle(style);
 
-        if (annotation) {
-          const isInQueue = annotationQueue.some(
-            (item) => item.page === page && item.text === annotation
-          );
-          const isCurrentlyTyping =
-            typingAnnotation?.page === page &&
-            typingAnnotation?.text === annotation;
-
-          if (!isInQueue && !isCurrentlyTyping) {
-            addAnnotation(page, annotation);
-          }
-        }
-
-        setTimeout(() => setActiveHighlight(null), 10000);
+        setTimeout(() => setActiveHighlight(null), 10000); 
       },
-      [scrollToPage, annotationQueue, typingAnnotation, addAnnotation]
+      [scrollToPage, activeHighlight, hStyle]
     );
 
     const processNewAnnotations = useCallback(
@@ -183,9 +189,6 @@ const ParsedPDFViewer = forwardRef<ParsedPDFViewerHandle, ParsedPDFViewerProps>(
       }
     }, []);
 
-
-
-
     const goToNextMatch = useCallback(() => {
       const { matches, currentIndex } = searchState;
       if (matches.length > 0) {
@@ -214,43 +217,53 @@ const ParsedPDFViewer = forwardRef<ParsedPDFViewerHandle, ParsedPDFViewerProps>(
       ) => {
         if (typeof text !== "string" || !term) return text;
 
-        const flags = matchCase ? "g" : "gi";
-        const boundary = fullWord ? "\\b" : "";
-        const regex = new RegExp(`${boundary}(${term})${boundary}`, flags);
+        // Case insensitive search
+        const regex = new RegExp(`(${term})`, "gi");
 
-        return text.split(/(\s+)/).map((part, i) => {
-          if (regex.test(part)) {
-            let className = "";
+        // For both single words and phrases
+        const parts = [];
+        let lastIndex = 0;
+        let match;
 
-            if (style === "highlight") {
-              className =
-                highlightStyle === "red-circle"
-                  ? "relative inline-block"
-                  : "border-b-2 border-red-500";
-            } else if (style === "search") {
-              className =
-                searchStyle === "bg-yellow"
-                  ? "bg-yellow-300 text-black px-1 rounded"
-                  : "bg-green-300 text-black px-1 rounded";
-            } else if (style === "citation") {
-              className = isActive
-                ? "bg-blue-500 text-white px-1 rounded animate-pulse"
-                : "bg-blue-300 text-black px-1 rounded";
-            }
-
-            return (
-              <span key={i} className={className}>
-                {part}
-                {style === "highlight" && highlightStyle === "red-circle" && (
-                  <span className="absolute -inset-1 border-2 border-red-500 rounded-full pointer-events-none"></span>
-                )}
-              </span>
-            );
+        while ((match = regex.exec(text)) !== null) {
+          // Add text before the match
+          if (match.index > lastIndex) {
+            parts.push(text.substring(lastIndex, match.index));
           }
-          return part;
-        });
+
+          // Determine styling based on the style parameter
+          let className = "";
+          if (style === "highlight") {
+            className = "relative inline-block";
+          } else if (style === "search") {
+            className = "bg-yellow-300 text-black px-1 rounded";
+          } else if (style === "citation") {
+            className = isActive
+              ? "bg-blue-500 text-white px-1 rounded animate-pulse"
+              : "bg-blue-300 text-black px-1 rounded animate-pulse";
+          }
+
+          // Add the highlighted match with appropriate styling
+          parts.push(
+            <span key={`match-${match.index}`} className={className}>
+              {match[0]}
+              {style === "highlight" && highlightStyle === "red-circle" && (
+                <span className="absolute -inset-1 border-2 border-red-500 rounded-full pointer-events-none"></span>
+              )}
+            </span>
+          );
+
+          lastIndex = match.index + match[0].length;
+        }
+
+        // Add remaining text
+        if (lastIndex < text.length) {
+          parts.push(text.substring(lastIndex));
+        }
+
+        return parts.length > 1 ? parts : text;
       },
-      [highlightStyle, searchStyle, matchCase, fullWord]
+      [highlightStyle]
     );
 
     const renderPageContent = useCallback(
@@ -258,32 +271,36 @@ const ParsedPDFViewer = forwardRef<ParsedPDFViewerHandle, ParsedPDFViewerProps>(
         let processedText = text;
         const isActivePage = activeHighlight && activeHighlight.page === index;
 
-        if (isActivePage && activeHighlight) {
-          processedText = highlightText(
-            processedText as string,
+        // Create an array to hold all the highlighted elements
+        let elements: React.ReactNode = processedText;
+
+        // Apply highlights in order of priority
+        if (activeHighlight) {
+          elements = highlightText(
+            typeof elements === "string" ? elements : text,
             activeHighlight.term,
             hStyle,
             true
-          ) as string;
+          );
         }
 
         if (highlightTerm) {
-          processedText = highlightText(
-            processedText as string,
+          elements = highlightText(
+            typeof elements === "string" ? elements : text,
             highlightTerm,
             hStyle
-          ) as string;
+          );
         }
 
         if (searchState.query) {
-          processedText = highlightText(
-            processedText as string,
+          elements = highlightText(
+            typeof elements === "string" ? elements : text,
             searchState.query,
-            "search",
-          ) as string;
+            "search"
+          );
         }
 
-        return processedText;
+        return elements;
       },
       [activeHighlight, highlightTerm, searchState.query, highlightText, hStyle]
     );
@@ -324,7 +341,7 @@ const ParsedPDFViewer = forwardRef<ParsedPDFViewerHandle, ParsedPDFViewerProps>(
           isTyping: true,
         });
         setAnnotationQueue((prev) => prev.slice(1));
-        scrollToPage(nextAnnotation.page, true);
+        scrollToAnnotation(nextAnnotation.page, true);
       }
     }, [annotationQueue, typingAnnotation, scrollToPage]);
 
@@ -437,27 +454,29 @@ const ParsedPDFViewer = forwardRef<ParsedPDFViewerHandle, ParsedPDFViewerProps>(
                   {renderPageContent(text, index)}
 
                   {/* Annotations */}
-                  {(pageAnnotations[index]?.length > 0 ||
-                    (typingAnnotation?.page === index &&
-                      typingAnnotation?.isTyping)) && (
-                    <div className="mt-4 pt-2 border-t border-gray-700">
-                      <span className="text-gray-400">Annotations:</span>
-                      <ul className="list-disc pl-5 mt-1">
-                        {pageAnnotations[index]?.map((anno, i) => (
-                          <li key={i} className="text-red-800">
-                            {anno}
-                          </li>
-                        ))}
-                        {typingAnnotation?.page === index &&
-                          typingAnnotation?.isTyping && (
-                            <li className="text-red-800">
-                              {typingAnnotation.currentText}
-                              <span className="animate-pulse">|</span>
+                  <div id={`chunk-${index}-annotations`}>
+                    {(pageAnnotations[index]?.length > 0 ||
+                      (typingAnnotation?.page === index &&
+                        typingAnnotation?.isTyping)) && (
+                      <div className="mt-4 pt-2 border-t border-gray-700">
+                        <span className="text-gray-400">Annotations:</span>
+                        <ul className="list-disc pl-5 mt-1">
+                          {pageAnnotations[index]?.map((anno, i) => (
+                            <li key={i} className="text-red-800">
+                              {anno}
                             </li>
-                          )}
-                      </ul>
-                    </div>
-                  )}
+                          ))}
+                          {typingAnnotation?.page === index &&
+                            typingAnnotation?.isTyping && (
+                              <li className="text-red-800">
+                                {typingAnnotation.currentText}
+                                <span className="animate-pulse">|</span>
+                              </li>
+                            )}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
                 </pre>
               </div>
             ))

@@ -93,16 +93,22 @@ export default function ChatInterface({
     }
 
     // Process highlight command
-    const highlightMatch = commandsText.match(/\/highlight\/(\d+)\/([^\n"]+)/);
-    if (highlightMatch && highlightMatch[1]) {
-      const pageNum = parseInt(highlightMatch[1]) - 1;
-      const textToHighlight = highlightMatch[2].trim();
-      setTimeout(() => {
-        pdfViewerRef.current?.scrollToPosition(pageNum, textToHighlight, undefined, "highlight");
-      }, 800);
-    }
-
-    // Process annotate commands
+    const highlightMatches = Array.from(
+      commandsText.matchAll(/\/highlight\/(\d+)\/([^\n"]+)/g)
+    );
+    if (highlightMatches.length > 0) {
+      highlightMatches.forEach((match) => {
+        const pageNum = parseInt(match[1]) - 1;
+        const textToHighlight = match[2].trim();
+        setTimeout(() => {
+          pdfViewerRef.current?.scrollToPosition(
+            pageNum,
+            textToHighlight,
+            "highlight"
+          );
+        }, 800);
+      });
+    } // Process annotate commands
     const annotateMatches = Array.from(
       commandsText.matchAll(/\/annotate\/(\d+)\/([^\n]+)/g)
     );
@@ -178,6 +184,7 @@ export default function ChatInterface({
         ...prev,
         {
           ...data.aiMessage,
+          id: `latest-${Date.now()}`,
           content: cleanAIResponse(data.aiMessage.content),
         },
       ]);
@@ -262,13 +269,50 @@ export default function ChatInterface({
                   <div
                     className={`text-xs mt-1 ${
                       message.isUserMessage ? "text-blue-200" : "text-gray-500"
-                    }`}
+                    } flex items-center`}
                   >
                     {new Date(message.createdAt).toLocaleTimeString([], {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}
+
+                    {!message.isUserMessage &&
+                      message.content.includes("commands:") && (
+                        <button
+                          onClick={() => {
+                            const commandsEl = document.getElementById(
+                              `commands-${message.id}`
+                            );
+                            if (commandsEl) {
+                              commandsEl.style.display =
+                                commandsEl.style.display === "none"
+                                  ? "block"
+                                  : "none";
+                            }
+                          }}
+                          className="ml-2 text-blue-500 hover:text-blue-700 text-xs underline"
+                        >
+                          Commands
+                        </button>
+                      )}
                   </div>
+
+                  {!message.isUserMessage &&
+                    message.content.includes("commands:") && (
+                      <div
+                        id={`commands-${message.id}`}
+                        className="mt-2 text-blue-500 italic"
+                        style={{ display: "none" }}
+                      >
+                        {message.content
+                          .match(/commands:\s*([\s\S]+)$/)?.[1]
+                          ?.trim()
+                          .split("\n")
+                          .map((cmd, i) => (
+                            <div key={i}>{cmd}</div>
+                          ))}
+                      </div>
+                    )}
                 </div>
               </div>
             ))}
