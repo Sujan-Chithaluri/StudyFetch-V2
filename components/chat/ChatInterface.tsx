@@ -184,8 +184,7 @@ export default function ChatInterface({
         ...prev,
         {
           ...data.aiMessage,
-          id: `latest-${Date.now()}`,
-          content: cleanAIResponse(data.aiMessage.content),
+          content: data.aiMessage.content,
         },
       ]);
 

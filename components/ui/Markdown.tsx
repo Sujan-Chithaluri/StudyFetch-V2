@@ -53,16 +53,39 @@ export function Markdown({ content }: { content: string }) {
         em: ({ node, ...props }) => <em className="italic" {...props} />,
         pre: ({ node, ...props }) => (
           <pre
-            className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100 p-2 rounded my-2 overflow-x-auto"
+            className="bg-blue-100 text-blue-800 p-2 rounded my-2 overflow-x-auto"
             {...props}
           />
         ),
-        code: ({ node, ...props }) => (
-          <code
-            className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100 px-1 py-0.5 rounded"
-            {...props}
-          />
-        ),
+        code: ({ node, children, ...props }) => {
+          const content = children?.toString() || "";
+          const pageMatch = content.match(/^page\[(\d+)\]$/);
+
+          if (pageMatch) {
+            const pageNum = parseInt(pageMatch[1]) - 1;
+
+            return (
+              <code
+                className="bg-blue-100 text-blue-800 px-1 py-0.5 rounded cursor-pointer"
+                onClick={() => {
+                  if (pdfViewerRef.current) {
+                    pdfViewerRef.current.gotoPage(pageNum, { blink: false });
+                  }
+                }}
+                {...props}
+              >
+                {content}
+              </code>
+            );
+          }
+
+          return (
+            <code
+              className="bg-gray-100 text-gray-800 px-1 py-0.5 rounded"
+              {...props}
+            />
+          );
+        },
       }}
     >
       {content}
