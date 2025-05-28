@@ -57,7 +57,7 @@ export default function ChatInterface({
         const pageNum = parseInt(pageMatch[0]) - 1; // Convert to 0-based index
         // Navigate to that page with a slight delay to ensure PDF is loaded
         setTimeout(() => {
-          pdfViewerRef.current?.gotoPage(pageNum, { blink: true });
+          pdfViewerRef.current?.gotoPage(pageNum, true);
         }, 500);
       }
     }
@@ -70,7 +70,7 @@ export default function ChatInterface({
       // Highlight the text with a slight delay
       setTimeout(() => {
         pdfViewerRef.current?.highlight(textToHighlight);
-      }, 800);
+      }, 3000);
     }
   };
 
@@ -82,33 +82,45 @@ export default function ChatInterface({
     if (!commandsMatch || !commandsMatch[1]) return;
 
     const commandsText = commandsMatch[1].trim();
+    let currentDelay = 0;
 
     // Process page command
     const pageMatch = commandsText.match(/\/page\/(\d+)/);
     if (pageMatch && pageMatch[1]) {
       const pageNum = parseInt(pageMatch[1]) - 1; // Convert to 0-based index
       setTimeout(() => {
-        pdfViewerRef.current?.gotoPage(pageNum, { blink: true });
+        pdfViewerRef.current?.gotoPage(pageNum, true);
       }, 500);
+      currentDelay = 1000; // Start other commands after page navigation
     }
 
-    // Process highlight command
+    // Process highlight commands - remove duplicate implementation
     const highlightMatches = Array.from(
       commandsText.matchAll(/\/highlight\/(\d+)\/([^\n"]+)/g)
     );
     if (highlightMatches.length > 0) {
-      highlightMatches.forEach((match) => {
+      highlightMatches.forEach((match, index) => {
         const pageNum = parseInt(match[1]) - 1;
         const textToHighlight = match[2].trim();
+
+        // Process each highlight with 5 seconds between them
         setTimeout(() => {
+          console.log(
+            `Highlighting: Page ${pageNum + 1}, Text: "${textToHighlight}"`
+          );
           pdfViewerRef.current?.scrollToPosition(
             pageNum,
             textToHighlight,
             "highlight"
           );
-        }, 800);
+        }, currentDelay + index * 5000); // 5 second delay between each highlight
       });
-    } // Process annotate commands
+
+      // Update current delay for next command type
+      currentDelay += highlightMatches.length * 5000;
+    }
+
+    // Process annotate commands
     const annotateMatches = Array.from(
       commandsText.matchAll(/\/annotate\/(\d+)\/([^\n]+)/g)
     );
@@ -122,7 +134,7 @@ export default function ChatInterface({
         if (pdfViewerRef.current?.processNewAnnotations) {
           pdfViewerRef.current.processNewAnnotations(annotations);
         }
-      }, 1000);
+      }, currentDelay + 1000);
     }
   };
 
@@ -289,7 +301,7 @@ export default function ChatInterface({
                                   : "none";
                             }
                           }}
-                          className="ml-2 text-blue-500 hover:text-blue-700 text-xs underline"
+                          className="ml-2 text-gray-100 hover:text-blue-700 text-xs underline"
                         >
                           Commands
                         </button>

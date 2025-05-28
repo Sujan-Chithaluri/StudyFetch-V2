@@ -12,7 +12,7 @@ import PdfControls from "./PdfControls";
 // import html2pdf from "html2pdf.js";
 
 export interface ParsedPDFViewerHandle {
-  gotoPage: (page: number, options?: { blink?: boolean }) => void;
+  gotoPage: (page: number, blink?: boolean ) => void;
   highlight: (term: string, page?: number) => void;
   scrollToPosition: (
     page: number,
@@ -148,8 +148,6 @@ const ParsedPDFViewer = forwardRef<ParsedPDFViewerHandle, ParsedPDFViewerProps>(
         scrollToPage(page, true);
         setActiveHighlight({ page, term });
         setHStyle(style);
-
-        setTimeout(() => setActiveHighlight(null), 10000); 
       },
       [scrollToPage, activeHighlight, hStyle]
     );

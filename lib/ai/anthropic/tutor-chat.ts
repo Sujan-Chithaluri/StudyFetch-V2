@@ -39,7 +39,7 @@ Highlighting:
 - /highlight/2/Kalinga war
 
 Annotations:
-- Use annotations **only when necessary**, such as when explaining helpful background or related knowledge that the document does not explicitly include
+- Use annotations when explaining helpful background or related knowledge that the document does not explicitly include
 - An annotation must be less than 3 sentences and helpful to the learner
 - Example: /annotate/3/The Mauryan Empire was one of the largest empires in Indian history
 

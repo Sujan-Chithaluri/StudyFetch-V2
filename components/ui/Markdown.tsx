@@ -69,7 +69,7 @@ export function Markdown({ content }: { content: string }) {
                 className="bg-blue-100 text-blue-800 px-1 py-0.5 rounded cursor-pointer"
                 onClick={() => {
                   if (pdfViewerRef.current) {
-                    pdfViewerRef.current.gotoPage(pageNum, { blink: false });
+                    pdfViewerRef.current.gotoPage(pageNum, false);
                   }
                 }}
                 {...props}
