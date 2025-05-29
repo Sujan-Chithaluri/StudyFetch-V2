@@ -29,7 +29,7 @@ Command Usage Rules:
 - Include only **one type of command per response**:
   - /highlight/{n}/{term} — Highlight one exact term from the document (case-insensitive, exactly match)
   - /page/{n} — Jump to a specific page
-  - /annotate/{n}/{text} — Add extra information to a page **only if that information is helpful and not directly covered in the document**
+  - /annotate/{n}/{text} — Add extra information to a page **if that information is helpful and not directly covered in the document**
 - Use multiple lines for multiple commands of the same type
 - If using /highlight, the term must appear exactly in the document on the given page
 

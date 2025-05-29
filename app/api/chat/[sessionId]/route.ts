@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import prisma from "@/lib/prisma";
+import { deletePdfFromBlob } from '@/lib/blob';
 
 export async function DELETE(
   request: NextRequest,
@@ -45,24 +46,23 @@ export async function DELETE(
       },
     });
 
-    // If this was the only chat session using this document, you might want to delete the document too
+    // If there's a document associated with this chat session
     if (chatSession.document) {
-      const otherSessionsUsingDocument = await prisma.chatSession.count({
+      // Delete the document from the database
+      await prisma.document.delete({
         where: {
-          documentId: chatSession.document.id,
-          id: {
-            not: sessionId,
-          },
+          id: chatSession.document.id,
         },
       });
-
-      if (otherSessionsUsingDocument === 0) {
-        // No other sessions are using this document, so we can delete it
-        await prisma.document.delete({
-          where: {
-            id: chatSession.document.id,
-          },
-        });
+      
+      // Delete the file from blob storage if URL exists
+      if (chatSession.document.fileUrl) {
+        try {
+          await deletePdfFromBlob(chatSession.document.fileUrl);
+        } catch (blobError) {
+          console.error("Error deleting file from blob storage:", blobError);
+          // Continue with the response even if blob deletion fails
+        }
       }
     }
 

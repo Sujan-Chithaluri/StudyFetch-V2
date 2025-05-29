@@ -19,7 +19,6 @@ export async function POST(
     const sessionId = params.sessionId;
     const { content, documentContent } = await request.json();
 
-
     // Verify the chat session exists and belongs to the user
     const chatSession = await prisma.chatSession.findUnique({
       where: {
@@ -36,7 +35,10 @@ export async function POST(
     });
 
     if (!chatSession) {
-      return NextResponse.json({ error: "Chat session not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Chat session not found" },
+        { status: 404 }
+      );
     }
 
     // Create user message
@@ -50,26 +52,27 @@ export async function POST(
     });
 
     // Convert database messages to AI SDK messages
-    const aiMessages: Message[] = chatSession.messages.map(msg => ({
+    const aiMessages: Message[] = chatSession.messages.map((msg) => ({
       id: msg.id,
-      role: msg.isUserMessage ? 'user' : 'assistant',
-      content: msg.content
+      role: msg.isUserMessage ? "user" : "assistant",
+      content: msg.content,
     }));
 
     // Add the new user message
     aiMessages.push({
       id: userMessage.id,
-      role: 'user',
-      content
+      role: "user",
+      content,
     });
 
     // Generate AI response
-    let aiResponseText = '';
+    let aiResponseText = "";
     try {
       aiResponseText = await generateChatResponse(aiMessages, documentContent);
     } catch (error) {
       console.error("Error generating AI response:", error);
-      aiResponseText = "I'm sorry, I encountered an error while processing your request.";
+      aiResponseText =
+        "I'm sorry, I encountered an error while processing your request.";
     }
 
     // Create AI message in database
@@ -79,6 +82,15 @@ export async function POST(
         isUserMessage: false,
         userId: session.user.id,
         chatSessionId: sessionId,
+      },
+    });
+
+    await prisma.chatSession.update({
+      where: {
+        id: sessionId,
+      },
+      data: {
+        updatedAt: new Date(),
       },
     });
 
