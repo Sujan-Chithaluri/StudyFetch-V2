@@ -52,14 +52,14 @@ export async function POST(req: NextRequest) {
         {
           role: "system",
           content: 
-            "You are an AI flashcard generator. Your job is to take a document and create 10 multiple-choice flashcards based on the content of the document. Each flashcard should have 4 options with one correct answer."
+            "You are an AI flashcard generator. Your job is to take a document and create 5 to 10 multiple-choice flashcards based on the content of the document. Each flashcard should have 4 options with one correct answer."
         },
         {
           role: "user",
           content: [
             {
               type: "text",
-              text: `Create 10 multiple-choice flashcards based on this document:\n\n${documentContent}`
+              text: `Create 5 to 10 multiple-choice flashcards based on this document:\n\n${documentContent}`
             }
           ]
         }

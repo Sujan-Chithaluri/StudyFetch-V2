@@ -41,6 +41,7 @@ Highlighting:
 Annotations:
 - Use annotations when explaining helpful background or related knowledge that the document does not explicitly include
 - An annotation must be less than 3 sentences and helpful to the learner
+- Add annotations frequently in your responses
 - Example: /annotate/3/The Mauryan Empire was one of the largest empires in Indian history
 
 Example response format 1:

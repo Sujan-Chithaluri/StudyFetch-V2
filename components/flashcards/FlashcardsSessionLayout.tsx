@@ -4,7 +4,9 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import SessionSidebar from "@/components/layout/SessionSidebar";
 import FlashcardSetList from "@/components/flashcards/FlashcardSetList";
-import FlashcardViewer, { FlashcardViewerRef } from "@/components/flashcards/FlashcardViewer";
+import FlashcardViewer, {
+  FlashcardViewerRef,
+} from "@/components/flashcards/FlashcardViewer";
 
 type FlashcardSessionLayoutProps = {
   currentSession: any;
@@ -34,7 +36,10 @@ export default function FlashcardSessionLayout({
 
   // Update active set ID when flashcard sets change
   useEffect(() => {
-    if (flashcardSets?.length > 0 && !flashcardSets.find(set => set.id === activeSetId)) {
+    if (
+      flashcardSets?.length > 0 &&
+      !flashcardSets.find((set) => set.id === activeSetId)
+    ) {
       setActiveSetId(flashcardSets[0]?.id);
     }
   }, [flashcardSets, activeSetId]);
@@ -70,7 +75,7 @@ export default function FlashcardSessionLayout({
       });
 
       console.log("Response from generate flashcards:", response);
-      
+
       if (response.ok) {
         // Refresh the page to get the new flashcards
         window.location.reload();
@@ -105,30 +110,6 @@ export default function FlashcardSessionLayout({
           </h1>
 
           <div className="flex items-center space-x-4">
-            {/* Generate New Button */}
-            <button
-              onClick={generateNewFlashcards}
-              disabled={generating}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center"
-            >
-              {generating ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  Generate New Set
-                </>
-              )}
-            </button>
-
             {/* Delete Button */}
             <div className="relative z-[100]">
               <button
@@ -200,6 +181,8 @@ export default function FlashcardSessionLayout({
               activeSetId={activeSetId}
               viewerRef={flashcardViewerRef}
               onSetSelect={handleSetSelect}
+              onGenerateNew={generateNewFlashcards}
+              generating={generating}
             />
           )}
         </div>
@@ -209,7 +192,10 @@ export default function FlashcardSessionLayout({
           {flashcardSets?.length > 0 ? (
             <FlashcardViewer
               ref={flashcardViewerRef}
-              initialSet={flashcardSets.find(set => set.id === activeSetId) || flashcardSets[0]}
+              initialSet={
+                flashcardSets.find((set) => set.id === activeSetId) ||
+                flashcardSets[0]
+              }
             />
           ) : (
             <div className="h-full flex items-center justify-center p-6 text-gray-500">
