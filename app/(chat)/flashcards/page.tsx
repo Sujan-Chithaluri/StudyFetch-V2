@@ -12,18 +12,21 @@ import Pagination from "@/components/ui/Pagination";
 export default async function FlashcardsPage({
   searchParams,
 }: {
-  searchParams: { page?: string; limit?: string };
+  searchParams: { [key: string]: string | string[] | undefined };
 }) {
+  // Parse pagination params from query params
+  const page = searchParams.page ? String(searchParams.page) : "1";
+  const limitParam = searchParams.limit ? String(searchParams.limit) : "6";
+  
+  const currentPage = parseInt(page);
+  const limit = parseInt(limitParam); // Default to 6 items per page
+  const offset = (currentPage - 1) * limit;
+  
   const session = await getServerSession(authOptions);
   
   if (!session) {
     redirect("/login");
   }
-  
-  // Parse pagination params from query params
-  const currentPage = parseInt(searchParams.page || "1");
-  const limit = parseInt(searchParams.limit || "6"); // Default to 6 items per page
-  const offset = (currentPage - 1) * limit;
   
   // Get total count for pagination
   const totalSessions = await prisma.chatSession.count({

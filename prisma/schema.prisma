@@ -63,4 +63,5 @@ model Message {
   user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   chatSessionId String
   chatSession   ChatSession @relation(fields: [chatSessionId], references: [id], onDelete: Cascade)
+  metadata      Json? 
 }

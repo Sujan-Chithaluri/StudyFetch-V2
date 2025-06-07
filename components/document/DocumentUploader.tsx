@@ -21,7 +21,7 @@ export default function DocumentUploader({
   onSuccess,
   onError,
   isUploading = false,
-  maxSizeMB = 10,
+  maxSizeMB = 3,
   acceptedFileTypes = ["application/pdf"],
 }: DocumentUploaderProps) {
   const [file, setFile] = useState<File | null>(null);
